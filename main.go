@@ -67,9 +67,13 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 	// Example to retrieve an optional configuration parameter
 	url := output.FLBPluginConfigKey(plugin, "url")
 	token := output.FLBPluginConfigKey(plugin, "token")
+	tenant := output.FLBPluginConfigKey(plugin, "tenant")
+	namespace := output.FLBPluginConfigKey(plugin, "namespace")
 
 	// Set the context to point to any Go variable
 	configContext["url"] = url
+	configContext["tenant"] = tenant
+	configContext["namespace"] = namespace
 
 	if err := initPulsarClient(url, token); err != nil {
 		log.Fatalf("init pulsar client error")
@@ -79,7 +83,7 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 	return output.FLB_OK
 }
 
-func parseNamespaceFromTag(tag string) string {
+func parseK8sNamespaceFromTag(tag string) string {
 	splits := strings.Split(tag, ".")
 	if len(splits) < 2 {
 		return ""
@@ -145,6 +149,8 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 	// Type assert context back into the original type for the Go variable
 	cfgContext := output.FLBPluginGetContext(ctx).(map[string]string)
 	log.Printf("[fluent-go] Flush called for cfgContext: %v", cfgContext)
+	tenant := cfgContext["tenant"]
+	namespace := cfgContext["namespace"]
 
 	dec := output.NewDecoder(data, int(length))
 
@@ -172,7 +178,8 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 		fmt.Printf("[%d] %s: [%s, {", count, C.GoString(tag), timestamp.String())
 
 		fbTag := fmt.Sprintf("%s", C.GoString(tag))
-		topic := parseNamespaceFromTag(fbTag)
+		k8sNamespace := parseK8sNamespaceFromTag(fbTag)
+		topic := fmt.Sprintf("%s/%s/%s", tenant, namespace, k8sNamespace)
 
 		for k, v := range record {
 			fmt.Printf("\"%s\": %s, ", k, v)
