@@ -187,9 +187,11 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 		fmt.Printf("}\n")
 		count++
 
-		jsonBytes, err := buildJsonBytes(record)
+		m := record2map(buildMapFromRecord(record))
+		jsonBytes, err := json.Marshal(m)
 		if err != nil {
-			log.Fatalf("build json bytes record error : %v", err)
+			log.Fatalf("json.Marshal record error : %v", err)
+			continue
 		}
 
 		addMessage(messages, topic, string(jsonBytes))
@@ -199,6 +201,63 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 	sendMessages(messages)
 
 	return output.FLB_OK
+}
+
+func buildMapFromRecord(record map[interface{}]interface{}) map[string]interface{} {
+	m := make(map[string]interface{})
+	for k, v := range record {
+		m[fmt.Sprintf("%s", k)] = v
+	}
+	return m
+}
+
+func flatten(m map[string]interface{}) map[string]interface{} {
+	o := make(map[string]interface{})
+	for k, v := range m {
+		switch child := v.(type) {
+		case map[string]interface{}:
+			nm := flatten(child)
+			for nk, nv := range nm {
+				o[k+"."+nk] = nv
+			}
+		default:
+			o[k] = v
+		}
+	}
+	return o
+}
+
+func record2map(record map[string]interface{}) map[string]interface{} {
+	v, ok := record["log"]
+	if !ok {
+		// log is not in record, return flatten record
+		return flatten(record)
+	}
+	// try to unmarshal log's value
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(v.(string)), &m); err != nil {
+		// something wrong happens, do not unmarshal
+		return flatten(record)
+	}
+	// we can unmarshal log's value into map
+	m, err := data2map([]byte(v.(string)))
+	if err != nil {
+		// cannot parse log's value to map, use raw
+	} else {
+		// add new unmasharled map to result map, and keep the log(raw data)
+		for k, v := range m {
+			record[k] = v
+		}
+	}
+	return flatten(record)
+}
+
+func data2map(data []byte) (map[string]interface{}, error) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 //export FLBPluginExit
