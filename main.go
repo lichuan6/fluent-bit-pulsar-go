@@ -235,12 +235,25 @@ func record2map(record map[string]interface{}) map[string]interface{} {
 	}
 	// try to unmarshal log's value
 	m := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(v.(string)), &m); err != nil {
+	var b []byte
+	switch v := v.(type) {
+	case []uint8:
+		b = v
+	case string:
+		b = []byte(v)
+	default:
+		b = nil
+	}
+	if b == nil {
+		return flatten(record)
+	}
+
+	if err := json.Unmarshal(b, &m); err != nil {
 		// something wrong happens, do not unmarshal
 		return flatten(record)
 	}
 	// we can unmarshal log's value into map
-	m, err := data2map([]byte(v.(string)))
+	m, err := data2map(b)
 	if err != nil {
 		// cannot parse log's value to map, use raw
 	} else {
