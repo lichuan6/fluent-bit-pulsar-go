@@ -91,22 +91,6 @@ func parseK8sNamespaceFromTag(tag string) string {
 	return splits[1]
 }
 
-func buildJsonBytes(record map[interface{}]interface{}) ([]byte, error) {
-	m := make(map[string]string)
-	for k, v := range record {
-		key := fmt.Sprintf("%s", k)
-		value := fmt.Sprintf("%s", v)
-		m[key] = value
-	}
-
-	jsonBytes, err := json.Marshal(m)
-	if err != nil {
-		log.Fatalf("json.Marshal record error : %v", err)
-		return nil, err
-	}
-	return jsonBytes, nil
-}
-
 func addMessage(m map[string][]string, key string, value string) {
 	if _, ok := m[key]; !ok {
 		m[key] = make([]string, 3)
@@ -156,38 +140,21 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 
 	messages := make(map[string][]string)
 
-	count := 0
 	for {
-		ret, ts, record := output.GetRecord(dec)
+		ret, _, record := output.GetRecord(dec)
 		if ret != 0 {
 			break
 		}
-
-		var timestamp time.Time
-		switch t := ts.(type) {
-		case output.FLBTime:
-			timestamp = ts.(output.FLBTime).Time
-		case uint64:
-			timestamp = time.Unix(int64(t), 0)
-		default:
-			fmt.Println("time provided invalid, defaulting to now.")
-			timestamp = time.Now()
-		}
-
-		// Print record keys and values
-		fmt.Printf("[%d] %s: [%s, {", count, C.GoString(tag), timestamp.String())
 
 		fbTag := fmt.Sprintf("%s", C.GoString(tag))
 		k8sNamespace := parseK8sNamespaceFromTag(fbTag)
 		topic := fmt.Sprintf("%s/%s/%s", tenant, namespace, k8sNamespace)
 
-		for k, v := range record {
-			fmt.Printf("\"%s\": %s, ", k, v)
-		}
-		fmt.Printf("}\n")
-		count++
-
-		m := record2map(buildMapFromRecord(record))
+		// the type of record is map[interface{}]interface{}
+		// in order to serialize and send to pulsar
+		// we need to convert it to map[string]interface{}
+		recordConverted := convert(record)
+		m := flattenRecordMap(recordConverted)
 		jsonBytes, err := json.Marshal(m)
 		if err != nil {
 			log.Fatalf("json.Marshal record error : %v", err)
@@ -206,8 +173,13 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 func buildMapFromRecord(record map[interface{}]interface{}) map[string]interface{} {
 	m := make(map[string]interface{})
 	for k, v := range record {
-		m[fmt.Sprintf("%s", k)] = v
+		key := fmt.Sprintf("%s", k)
+		if key == "kubernetes" {
+			continue
+		}
+		m[key] = v
 	}
+
 	return m
 }
 
@@ -227,7 +199,7 @@ func flatten(m map[string]interface{}) map[string]interface{} {
 	return o
 }
 
-func record2map(record map[string]interface{}) map[string]interface{} {
+func flattenRecordMap(record map[string]interface{}) map[string]interface{} {
 	v, ok := record["log"]
 	if !ok {
 		// log is not in record, return flatten record
@@ -263,6 +235,23 @@ func record2map(record map[string]interface{}) map[string]interface{} {
 		}
 	}
 	return flatten(record)
+}
+
+func convert(m map[interface{}]interface{}) map[string]interface{} {
+	o := make(map[string]interface{})
+
+	for k, v := range m {
+		key := fmt.Sprintf("%v", k)
+		switch child := v.(type) {
+		case map[interface{}]interface{}:
+			nm := convert(child)
+			o[key] = nm
+		default:
+			o[key] = fmt.Sprintf("%s", v)
+			// o[key] = v
+		}
+	}
+	return o
 }
 
 func data2map(data []byte) (map[string]interface{}, error) {
