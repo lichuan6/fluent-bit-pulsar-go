@@ -136,6 +136,7 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 	cfgContext := output.FLBPluginGetContext(ctx).(map[string]string)
 	tenant := cfgContext["tenant"]
 	namespace := cfgContext["namespace"]
+	debug := configContext["debug"]
 
 	dec := output.NewDecoder(data, int(length))
 
@@ -151,6 +152,13 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 		k8sNamespace := parseK8sNamespaceFromTag(fbTag)
 		topic := fmt.Sprintf("%s/%s/%s", tenant, namespace, k8sNamespace)
 
+		if debug == "true" {
+			var sb strings.Builder
+			for k, v := range record {
+				sb.WriteString(fmt.Sprintf("\"%s\": %v, ", k, v))
+			}
+			log.Printf("tag: %s, k8s namespace: %s, topic: %s, record: %s\n", fbTag, k8sNamespace, topic, sb.String())
+		}
 		// the type of record is map[interface{}]interface{}
 		// in order to serialize and send to pulsar
 		// we need to convert it to map[string]interface{}
