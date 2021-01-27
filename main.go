@@ -124,7 +124,6 @@ func sendMessages(messages map[string][]string) {
 
 //export FLBPluginFlush
 func FLBPluginFlush(data unsafe.Pointer, length C.int, tag *C.char) int {
-	log.Print("[fluent-go] Flush called for unknown instance")
 	return output.FLB_OK
 }
 
@@ -132,7 +131,6 @@ func FLBPluginFlush(data unsafe.Pointer, length C.int, tag *C.char) int {
 func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int {
 	// Type assert context back into the original type for the Go variable
 	cfgContext := output.FLBPluginGetContext(ctx).(map[string]string)
-	log.Printf("[fluent-go] Flush called for cfgContext: %v", cfgContext)
 	tenant := cfgContext["tenant"]
 	namespace := cfgContext["namespace"]
 
