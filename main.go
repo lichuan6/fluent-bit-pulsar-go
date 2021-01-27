@@ -92,6 +92,9 @@ func parseK8sNamespaceFromTag(tag string) string {
 }
 
 func addMessage(m map[string][]string, key string, value string) {
+	if value == "" {
+		return
+	}
 	if _, ok := m[key]; !ok {
 		m[key] = make([]string, 3)
 	}
