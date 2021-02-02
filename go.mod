@@ -1,4 +1,4 @@
-module pulsar-go
+module github.com/lichuan6/fluent-bit-pulsar-go
 
 go 1.15
 
