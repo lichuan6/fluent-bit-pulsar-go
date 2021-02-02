@@ -6,6 +6,19 @@ import (
 	"strings"
 )
 
+// AddMessage adds fluent-bit data as pulsar message
+// parameter key is the pulsar topic(i.e tenant/namespace/topic)
+// parameter value is the data of json encoded string
+func AddMessage(m map[string][]string, key string, value string) {
+	if value == "" {
+		return
+	}
+	if _, ok := m[key]; !ok {
+		m[key] = make([]string, 3)
+	}
+	m[key] = append(m[key], value)
+}
+
 func ParseK8sNamespaceFromTag(tag string) string {
 	splits := strings.Split(tag, ".")
 	if len(splits) < 2 {
