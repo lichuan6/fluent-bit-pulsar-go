@@ -43,7 +43,7 @@ func flatten(m map[string]interface{}) map[string]interface{} {
 	return o
 }
 
-func flattenRecordMap(record map[string]interface{}) map[string]interface{} {
+func FlattenRecordMap(record map[string]interface{}) map[string]interface{} {
 	v, ok := record["log"]
 	if !ok {
 		// log is not in record, return flatten record
@@ -81,14 +81,14 @@ func flattenRecordMap(record map[string]interface{}) map[string]interface{} {
 	return flatten(record)
 }
 
-func convert(m map[interface{}]interface{}) map[string]interface{} {
+func Convert(m map[interface{}]interface{}) map[string]interface{} {
 	o := make(map[string]interface{})
 
 	for k, v := range m {
 		key := fmt.Sprintf("%v", k)
 		switch child := v.(type) {
 		case map[interface{}]interface{}:
-			nm := convert(child)
+			nm := Convert(child)
 			o[key] = nm
 		default:
 			o[key] = fmt.Sprintf("%s", v)

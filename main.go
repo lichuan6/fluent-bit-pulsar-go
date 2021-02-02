@@ -172,8 +172,8 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 		// the type of record is map[interface{}]interface{}
 		// in order to serialize and send to pulsar
 		// we need to convert it to map[string]interface{}
-		recordConverted := convert(record)
-		m := flattenRecordMap(recordConverted)
+		recordConverted := util.Convert(record)
+		m := util.FlattenRecordMap(recordConverted)
 		jsonBytes, err := json.Marshal(m)
 		if err != nil {
 			log.Fatalf("json.Marshal record error : %v", err)
