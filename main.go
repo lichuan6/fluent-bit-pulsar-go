@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strings"
 	"unsafe"
 
 	"github.com/fluent/fluent-bit-go/output"
@@ -84,11 +83,9 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 		topic := fmt.Sprintf("%s/%s/%s", tenant, namespace, k8sNamespace)
 
 		if debug == "true" {
-			var sb strings.Builder
 			for k, v := range record {
-				sb.WriteString(fmt.Sprintf("\"%s\": %v, ", k, v))
+                fmt.Printf("tag: %s, k8s ns: %s, topic: %s, record: \"%s\": %v, \n", fbTag, k8sNamespace, topic, k, v)
 			}
-			fmt.Printf("tag: %s, k8s namespace: %s, topic: %s, record: %s\n", fbTag, k8sNamespace, topic, sb.String())
 		}
 
 		// the type of record is map[interface{}]interface{}
