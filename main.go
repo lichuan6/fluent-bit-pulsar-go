@@ -84,7 +84,7 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 
 		if debug == "true" {
 			for k, v := range record {
-                fmt.Printf("tag: %s, k8s ns: %s, topic: %s, record: \"%s\": %v, \n", fbTag, k8sNamespace, topic, k, v)
+				fmt.Printf("tag: %s, k8s ns: %s, topic: %s, record: \"%s\": %v, \n", fbTag, k8sNamespace, topic, k, v)
 			}
 		}
 
@@ -110,6 +110,7 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 
 //export FLBPluginExit
 func FLBPluginExit() int {
+	client.Close()
 	log.Println("puslar plugin exit")
 	return output.FLB_OK
 }

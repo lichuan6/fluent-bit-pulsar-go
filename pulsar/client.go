@@ -60,6 +60,14 @@ func (c *Client) GetOrCreateProducer(topic string) (Producer, error) {
 	return producer, nil
 }
 
+// Close closes producers and client
+func (c *Client) Close() {
+	for _, p := range c.producers {
+		p.Close()
+	}
+	c.Client.Close()
+}
+
 // SendMessages send fluent-bit log as messages to pulsar
 func (c *Client) SendMessages(messages map[string][]string) {
 	var producer pulsar.Producer
