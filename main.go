@@ -31,6 +31,7 @@ func FLBPluginRegister(def unsafe.Pointer) int {
 // plugin (context) pointer to fluentbit context (state/ c code)
 func FLBPluginInit(plugin unsafe.Pointer) int {
 	// Example to retrieve an optional configuration parameter
+	fmt.Println("FLBPluginInit...")
 	url := output.FLBPluginConfigKey(plugin, "url")
 	token := output.FLBPluginConfigKey(plugin, "token")
 	tenant := output.FLBPluginConfigKey(plugin, "tenant")
@@ -38,6 +39,7 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 	debug := output.FLBPluginConfigKey(plugin, "debug")
 
 	log.Printf("[FLBPluginInit]url: %s, token: %s, tenant: %s, namespace: %s\n", url, token, tenant, namespace)
+	fmt.Printf("[FLBPluginInit]url: %s, token: %s, tenant: %s, namespace: %s\n", url, token, tenant, namespace)
 
 	// Set the context to point to any Go variable
 	configContext["url"] = url
@@ -50,6 +52,8 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 	if err != nil {
 		log.Fatalf("init pulsar client error: %v", err)
 	}
+
+	fmt.Println("Pulsar client initialized OK")
 
 	output.FLBPluginSetContext(plugin, configContext)
 	return output.FLB_OK
@@ -112,8 +116,10 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 func FLBPluginExit() int {
 	client.Close()
 	log.Println("puslar plugin exit")
+	fmt.Println("puslar plugin exit")
 	return output.FLB_OK
 }
 
 func main() {
+	fmt.Println("plugin main")
 }
