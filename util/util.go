@@ -14,7 +14,7 @@ func AddMessage(m map[string][]string, key string, value string) {
 		return
 	}
 	if _, ok := m[key]; !ok {
-		m[key] = make([]string, 3)
+		m[key] = make([]string, 0)
 	}
 	m[key] = append(m[key], value)
 }
