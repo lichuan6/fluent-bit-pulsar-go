@@ -104,8 +104,8 @@ func Convert(m map[interface{}]interface{}) map[string]interface{} {
 			nm := Convert(child)
 			o[key] = nm
 		default:
-			o[key] = fmt.Sprintf("%s", v)
-			// o[key] = v
+			// o[key] = fmt.Sprintf("%s", v)
+			o[key] = v
 		}
 	}
 	return o
