@@ -98,14 +98,17 @@ func Convert(m map[interface{}]interface{}) map[string]interface{} {
 	o := make(map[string]interface{})
 
 	for k, v := range m {
-		key := fmt.Sprintf("%v", k)
+		key := fmt.Sprintf("%s", k)
 		switch child := v.(type) {
 		case map[interface{}]interface{}:
 			nm := Convert(child)
 			o[key] = nm
+		case []byte:
+			o[key] = fmt.Sprintf("%s", v)
 		default:
 			// o[key] = fmt.Sprintf("%s", v)
-			o[key] = v
+			// o[key] = v
+			o[key] = fmt.Sprintf("%v", v)
 		}
 	}
 	return o
