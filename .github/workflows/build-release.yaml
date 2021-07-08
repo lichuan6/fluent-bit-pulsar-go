@@ -45,7 +45,7 @@ jobs:
           flags: 'g'
 
       - name: Build the docker images
-        run: docker buildx build --no-cache -f ./dockerfiles/Dockerfile.${{ env.suffix }} -t ${{ env.dockerhub_username }}/fluent-bit:${{ env.suffix }}-${{ env.release }} --platform ${{ env.os }}/${{ env.arch }} .
+        run: docker buildx build --no-cache -f ./Dockerfile.${{ env.suffix }} -t ${{ env.dockerhub_username }}/fluent-bit-pulsar-go:${{ env.suffix }}-${{ env.release }} --platform ${{ env.os }}/${{ env.arch }} .
         env:
           release: ${{ steps.formatted_version.outputs.replaced }}
           arch: ${{ matrix.arch }}
