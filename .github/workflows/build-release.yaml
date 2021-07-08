@@ -13,7 +13,7 @@ jobs:
       fail-fast: true
       matrix:
         arch: [ amd64 ]
-        suffix: [ x86_64, x86_64-debug ]
+        suffix: [ x86_64 ]
         os: [ linux ]
         exclude:
           - {arch: amd64, suffix: arm64v8}
