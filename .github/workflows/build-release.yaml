@@ -45,7 +45,7 @@ jobs:
           flags: 'g'
 
       - name: Build the docker images
-        run: docker buildx build --no-cache -f ./Dockerfile.${{ env.suffix }} -t ${{ env.dockerhub_username }}/fluent-bit-pulsar-go:${{ env.suffix }}-${{ env.release }} --platform ${{ env.os }}/${{ env.arch }} .
+        run: docker buildx build --no-cache -f ./Dockerfile.${{ env.suffix }} -t ${{ env.dockerhub_username }}/fluent-bit-pulsar-go:${{ env.release }} --platform ${{ env.os }}/${{ env.arch }} .
         env:
           release: ${{ steps.formatted_version.outputs.replaced }}
           arch: ${{ matrix.arch }}
@@ -56,7 +56,7 @@ jobs:
       - name: Archive the docker images
         uses: ishworkh/docker-image-artifact-upload@v1
         with:
-          image: ${{ env.dockerhub_username }}/fluent-bit-pulsar-go:${{ env.arch }}-${{ env.release }}
+          image: ${{ env.dockerhub_username }}/fluent-bit-pulsar-go:${{ env.release }}
         env:
           release: ${{ steps.formatted_version.outputs.replaced }}
           arch: ${{ matrix.arch }}
