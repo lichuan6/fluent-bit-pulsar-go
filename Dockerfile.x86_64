@@ -12,6 +12,10 @@ ENV FLB_VERSION 1.6.9
 
 ENV DEBIAN_FRONTEND noninteractive
 
+ARG FLB_TARBALL=https://github.com/fluent/fluent-bit/archive/v$FLB_VERSION.tar.gz
+ENV FLB_SOURCE $FLB_TARBALL
+RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/fluent-bit-master/
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -29,13 +33,14 @@ RUN apt-get update && \
     libpq-dev \
     postgresql-server-dev-all \
     flex \
-    bison
+    bison \
+    && curl -L -o "/tmp/fluent-bit.tar.gz" ${FLB_SOURCE} \
+    && cd tmp/ && mkdir fluent-bit \
+    && tar zxfv fluent-bit.tar.gz -C ./fluent-bit --strip-components=1 \
+    && cd fluent-bit/build/ \
+    && rm -rf /tmp/fluent-bit/build/*
 
-RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src/
-COPY . /tmp/src/
-RUN rm -rf /tmp/src/build/*
-
-WORKDIR /tmp/src/build/
+WORKDIR /tmp/fluent-bit/build/
 RUN cmake -DFLB_DEBUG=Off \
           -DFLB_TRACE=Off \
           -DFLB_JEMALLOC=On \
@@ -45,6 +50,7 @@ RUN cmake -DFLB_DEBUG=Off \
           -DFLB_HTTP_SERVER=On \
           -DFLB_IN_SYSTEMD=On \
           -DFLB_OUT_KAFKA=On \
+          -DFLB_PROXY_GO=On \
           -DFLB_OUT_PGSQL=On ../
 
 RUN make -j $(getconf _NPROCESSORS_ONLN)
