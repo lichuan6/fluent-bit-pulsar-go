@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/apache/pulsar-client-go/pulsar"
+	"github.com/lichuan6/fluent-bit-pulsar-go/util"
 )
 
 // Client is a puslar client wrapper of the official pulsar.Client
@@ -69,7 +70,7 @@ func (c *Client) Close() {
 }
 
 // SendMessages send fluent-bit log as messages to pulsar
-func (c *Client) SendMessages(messages map[string][]string) {
+func (c *Client) SendMessages(messages map[string][]util.MessageWithTimestamp) {
 	var producer pulsar.Producer
 	var err error
 	for topic, msgs := range messages {
@@ -80,7 +81,8 @@ func (c *Client) SendMessages(messages map[string][]string) {
 		}
 		for _, msg := range msgs {
 			producer.SendAsync(context.Background(), &pulsar.ProducerMessage{
-				Payload: []byte(msg),
+				Payload:   []byte(msg.Message),
+				EventTime: msg.Timestamp,
 			}, func(id pulsar.MessageID, producerMessage *pulsar.ProducerMessage, e error) {
 				if e != nil {
 					log.Printf("Failed to publish message %v, error %v\n", producerMessage, e)

@@ -4,19 +4,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 )
+
+// MessageWithTimestamp we'd like to record the log's time with best effort.
+type MessageWithTimestamp struct {
+	Message   string
+	Timestamp time.Time
+}
 
 // AddMessage adds fluent-bit data as pulsar message
 // parameter key is the pulsar topic(i.e tenant/namespace/topic)
 // parameter value is the data of json encoded string
-func AddMessage(m map[string][]string, key string, value string) {
+func AddMessage(m map[string][]MessageWithTimestamp, key string, value string, ts time.Time) {
 	if value == "" {
 		return
 	}
 	if _, ok := m[key]; !ok {
-		m[key] = make([]string, 0)
+		m[key] = make([]MessageWithTimestamp, 0)
 	}
-	m[key] = append(m[key], value)
+	m[key] = append(m[key], MessageWithTimestamp{
+		Message:   value,
+		Timestamp: ts,
+	})
 }
 
 func ParseK8sNamespaceFromTag(tag string) string {

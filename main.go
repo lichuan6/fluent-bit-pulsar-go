@@ -1,11 +1,13 @@
 package main
 
 import (
-	"C"
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 	"unsafe"
+
+	"C"
 
 	"github.com/fluent/fluent-bit-go/output"
 	"github.com/lichuan6/fluent-bit-pulsar-go/pulsar"
@@ -70,12 +72,23 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 
 	dec := output.NewDecoder(data, int(length))
 
-	messages := make(map[string][]string)
+	messages := make(map[string][]util.MessageWithTimestamp)
 
 	for {
-		ret, _, record := output.GetRecord(dec)
+		ret, ts, record := output.GetRecord(dec)
 		if ret != 0 {
 			break
+		}
+
+		var timestamp time.Time
+		switch t := ts.(type) {
+		case output.FLBTime:
+			timestamp = ts.(output.FLBTime).Time
+		case uint64:
+			timestamp = time.Unix(int64(t), 0)
+		default:
+			fmt.Println("time provided invalid, defaulting to now.")
+			timestamp = time.Now()
 		}
 
 		fbTag := fmt.Sprintf("%s", C.GoString(tag))
@@ -99,7 +112,7 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 			continue
 		}
 
-		util.AddMessage(messages, topic, string(jsonBytes))
+		util.AddMessage(messages, topic, string(jsonBytes), timestamp)
 	}
 
 	// send messages in batch
